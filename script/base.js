@@ -7,6 +7,27 @@ function getdb(path) {
   return db;
 }
 
+function insertObj(db,tableName,obj) {
+  console.warn(Object.keys(obj).length);
+  var sql=`insert into 
+  <%=tableName%>(<%for (var i in obj) {
+    %><%=i%>,<%
+  }%>) 
+  values(<%for (var i in obj) {
+    %>'<%=obj[i]%>',<%
+  }%>)`;
+ 
+  sql=mutil.ejs.render(sql,{
+    tableName:tableName,
+    obj:obj
+  });
+  sql=sql.replace(/,\)/g,")");
+   console.log(sql);
+   db.run(sql, [],
+    function(err) {
+        db.emit('insert-error',err);
+   });
+}
 
 // 增
 function insert(db,sql,obj) {
@@ -19,7 +40,7 @@ function insert(db,sql,obj) {
     var fields= RegExp.$1.split(",");
     var vals=[];
     fields.forEach(function (item,index,arr) {
-        var val=obj[item]||"";
+        var val=obj[item.trim()]||"";
         vals.push(val);
     });
     db.run(sql, vals,
@@ -28,20 +49,30 @@ function insert(db,sql,obj) {
     });
 }
 
-function createTable(argument) {
-  var sql=`CREATE TABLE "CardType" (
-    "cardId"  TEXT NOT NULL,
-    "cardName"  TEXT,
-    "vouchNo"  INTEGER,
-    "vouchLab"  TEXT,
-    "createTime"  TEXT,
-    "updateTime"  TEXT,
-    "status"  TEXT,
-    PRIMARY KEY ("cardId")
-    );  `
+function createTable(db,sql) {
+  if(!(/create\s+table\s+/i.test(sql))){
+    var msg=`标准格式: CREATE TABLE 表名 (
+        "主键名"  主键类型 NOT NULL,
+        "字段1"  TEXT,
+        "字段2"  INTEGER,
+        ...
+        PRIMARY KEY ("主键名")
+        );  `;
+        db.emit('create-table-error',msg);
+        return;
+  }
+  db.run(sql,function (err,res) {
+      if(err){
+        db.emit('create-table-error',err);
+      }else{
+        db.emit('create-table-success',res);
+      }
+  });
 }
 
 module.exports={
   getdb:getdb,
   insert:insert,
+  insertObj:insertObj,
+  createTable:createTable,
 }
