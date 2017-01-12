@@ -3,7 +3,7 @@ var dbutil=sqlite.base;
 var db=dbutil.getdb("test.db");
 
 /*dbutil.insert(db,"insert into CardType(cardId, cardName, vouchNo, vouchLab, createTime, updateTime, status) values(?, ?, ?, ?, ?, ?, ?)",{
-	'cardId': '07',
+	'cardId': '08',
     'cardName': '测试卡',
     'vouchNo': '9',
     'vouchLab': 'card9',
@@ -22,7 +22,7 @@ var db=dbutil.getdb("test.db");
     'status': 'Y'
 });*/
 
-var sql=`CREATE TABLE "CardType" (
+/*var sql=`CREATE TABLE "CardType" (
 "cardId"  TEXT NOT NULL,
 "cardName"  TEXT,
 "vouchNo"  INTEGER,
@@ -42,4 +42,48 @@ db.on('create-table-error',function (err) {
 
 db.on('create-table-success',function (err) {
 	console.log(err);
+});*/
+
+
+    
+/*var obj={
+    tableName:"CardType",
+    data:{
+        'cardName': '测试卡A',
+        'updateTime': '2016-03-31 13:30:01'
+    },
+    where:{
+        'cardId': '07'
+    }
+}
+dbutil.updateObj(db,obj);*/
+
+/*var obj={
+    'cardName': '测试卡DD',
+    'updateTime': '2016-03-31 13:30:01',
+    'cardId': '07'
+}
+
+dbutil.update(db,"update CardType set cardName = ?, updateTime = ? where cardId = ?",obj);
+
+db.on('update-error',function (sql) {
+   console.warn(sql);
+});
+db.on('update-success',function () {
+   console.warn("更新成功");
+});*/
+
+/*dbutil.getAll(db,"select * from CardType",{cardId:'07'});
+db.on('all-success',function (data) {
+    console.warn(data);
+});*/
+
+/*dbutil.getSingle(db,"select * from CardType where cardId = ?",{cardId:'07'});
+db.on('get-success',function (data) {
+    console.warn(data);
+});*/
+
+dbutil.delete(db,"delete from CardType where cardId = ?",{cardId:'08'});
+db.on('delete-success',function () {
+    console.warn('删除成功');
 });
