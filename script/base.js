@@ -1,5 +1,6 @@
 var SQLite3 = require('sqlite3').verbose();
 var mutil = require('mill-n-utils');
+var Promise = require('promise');
 
 function getdb(path) {
   var db = new SQLite3.Database(path);
@@ -22,12 +23,18 @@ function insertObj(db,tableName,obj) {
     tableName:tableName,
     obj:obj
   });
-  sql=sql.replace(/,\)/g,")").replace(/&#39;/g,"'");
-   console.log(sql);
-   db.run(sql, [],
-    function(err) {
-        db.emit('insert-error',err);
-   });
+  return new Promise(function  (resolve,reject) {
+      sql=sql.replace(/,\)/g,")").replace(/&#39;/g,"'");
+     db.run(sql, [],
+      function(err,data) {
+          if(err){
+            reject(err);
+            db.emit('insert-error',err);
+          }else{
+            resolve(data);
+          }
+     });
+  });
 }
 
 // 增
@@ -44,9 +51,16 @@ function insert(db,sql,obj) {
         var val=obj[item.trim()]||"";
         vals.push(val);
     });
-    db.run(sql, vals,
-    function(err) {
-        db.emit('insert-error',err);
+    return new Promise(function  (resolve,reject) {
+          db.run(sql, vals,
+          function(err,data) {
+              if(err){
+                reject(err);
+                db.emit('insert-error',err);
+              }else{
+                resolve(data);
+              }
+          });
     });
 }
 //解决sql中a=?的问题
@@ -63,14 +77,18 @@ function dosql(sql,obj) {
 }
 function runer(db,sql,obj,eventstr) {
     
-    sql=dosql(sql,obj);
-    db.run(sql,
-    function(err) {
-        if (err) {
-            db.emit(eventstr[0]||'error',err,sql);
-        } else {
-            db.emit(eventstr[1]||'success');
-        }
+    return new Promise(function  (resolve,reject) {
+      sql=dosql(sql,obj);
+      db.run(sql,
+      function(err,data) {
+          if (err) {
+              reject(err);
+              db.emit(eventstr[0]||'error',err,sql);
+          } else {
+              resolve(data);
+              db.emit(eventstr[1]||'success');
+          }
+      });
     });
 }
 
@@ -93,12 +111,16 @@ function createTable(db,sql) {
         db.emit('create-table-error',msg);
         return;
   }
-  db.run(sql,function (err,res) {
-      if(err){
-        db.emit('create-table-error',err);
-      }else{
-        db.emit('create-table-success',res);
-      }
+  return new Promise(function  (resolve,reject) {
+    db.run(sql,function (err,res) {
+        if(err){
+          reject(err);
+          db.emit('create-table-error',err);
+        }else{
+          resolve(res);
+          db.emit('create-table-success',res);
+        }
+    });
   });
 }
 
@@ -131,36 +153,50 @@ function updateObj(db,obj) {
     }
     sql=sql.replace(/,\swhere/," where").replace(/and;/,";");
     console.log(sql);
-    db.run(sql,
-    function(err) {
-        if (err) {
-            db.emit('update-error',err);
-        } else {
-            db.emit('update-success');
-        }
-    });
+   return new Promise(function  (resolve,reject) {
+      db.run(sql,
+      function(err,data) {
+          if (err) {
+              reject(err);
+              db.emit('update-error',err);
+          } else {
+              resolve(data);
+              db.emit('update-success');
+          }
+      });
+   });
 }
 
 function getSingle(db,sql, obj) {
-    db.get(dosql(sql,obj),
-    function(err, result) {
-        if (err) {
-            db.emit('get-error',err,sql);
-        } else {
-            db.emit('get-success',result);
-        }
+    return new Promise(function  (resolve,reject) {
+      db.get(dosql(sql,obj),
+      function(err, result) {
+          if (err) {
+            reject(err,sql);
+              db.emit('get-error',err,sql);
+          } else {
+            resolve(result);
+              db.emit('get-success',result);
+          }
+      });
     });
 }
 
 function getAll(db,sql, obj) {
+  return new Promise(function  (resolve,reject) {
     db.all(dosql(sql,obj),
     function(err, result) {
         if (err) {
+            reject(err,sql);
             db.emit('all-error',err,sql);
+
         } else {
+            resolve(result);
             db.emit('all-success',result);
         }
     });
+  });
+    
 }
 
 
